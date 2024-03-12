@@ -10,6 +10,7 @@ import com.mongodb.ms0.example.javasample.models.Customer;
 import org.bson.types.ObjectId;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ public class CustomerDAO {
     private MongoCollection<Customer> collection;
 
     @Autowired
-    public CustomerDAO(MongoClient client) {
+    public CustomerDAO(@Qualifier("mongoClient") MongoClient client) {
         MongoDatabase database = client.getDatabase("ms0");
         this.collection = database.getCollection("customers", Customer.class);
     }

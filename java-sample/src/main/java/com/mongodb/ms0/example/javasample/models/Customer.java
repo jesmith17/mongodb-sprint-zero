@@ -1,11 +1,12 @@
 package com.mongodb.ms0.example.javasample.models;
 
-import org.bson.BsonObjectId;
+
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
 
 import java.util.List;
+
 
 public class Customer {
 
@@ -64,6 +65,7 @@ public class Customer {
         this.address = address;
     }
 
+
     public List<Phone> getPhones() {
         return phones;
     }
@@ -71,4 +73,6 @@ public class Customer {
     public void setPhones(List<Phone> phones) {
         this.phones = phones;
     }
+
+
 }
