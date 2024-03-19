@@ -149,8 +149,8 @@ public class MongoDBConnection {
 
 
 
-        //HashMap<String, BsonDocument> queryableMap = new HashMap<>();
-        //queryableMap.put("csfle.patients", queryableEncryptionSchema);
+        HashMap<String, BsonDocument> queryableMap = new HashMap<>();
+        queryableMap.put("csfle.patients", queryableEncryptionSchema);
 
         Map<String, Object> extraOptions = new HashMap<String, Object>();
         extraOptions.put("cryptSharedLibPath", "/Users/josh.smith/Projects/mongodb-sprint-zero/java-sample/mongo-crypt/lib/mongo_crypt_v1.dylib");
