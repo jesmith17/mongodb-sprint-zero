@@ -7,7 +7,7 @@ public class MedicalRecords {
     @BsonProperty
     private Integer weight;
     @BsonProperty
-    private String bloodPresssure;
+    private String bloodPressure;
 
     public Integer getWeight() {
         return weight;
@@ -17,11 +17,11 @@ public class MedicalRecords {
         this.weight = weight;
     }
 
-    public String getBloodPresssure() {
-        return bloodPresssure;
+    public String getBloodPressure() {
+        return bloodPressure;
     }
 
-    public void setBloodPresssure(String bloodPresssure) {
-        this.bloodPresssure = bloodPresssure;
+    public void setBloodPressure(String bloodPressure) {
+        this.bloodPressure = bloodPressure;
     }
 }

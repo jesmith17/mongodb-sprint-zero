@@ -7,14 +7,14 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.CreateEncryptedCollectionParams;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
 import com.mongodb.ms0.example.javasample.models.Customer;
 import com.mongodb.ms0.example.javasample.models.Patient;
-import org.bson.BsonBinary;
-import org.bson.BsonDocument;
-import org.bson.Document;
+import org.bson.*;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.ClassModel;
@@ -43,7 +43,7 @@ public class MongoDBConnection {
     public Map<String, Object> keyMap = new HashMap<>();
     public Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
 
-    private String keyVaultNamespace = "csfle.patient";
+    private String keyVaultNamespace = "csfle.patientKeys";
 
     public String base64DEK;
     private Map<String, BsonDocument> schemaMap = new HashMap<>();
@@ -57,12 +57,7 @@ public class MongoDBConnection {
     public MongoClient mongoClient() {
 
         ConnectionString connectionString = new ConnectionString(uri);
-
-        ClassModel<Customer> customerPojo = ClassModel.builder(Customer.class).build();
-        //ClassModel<Patient> patientPojo = ClassModel.builder(Patient.class).build();
-        PojoCodecProvider pojoCodecProvider = PojoCodecProvider.builder().register(customerPojo).build();
-
-
+        CodecProvider pojoCodecProvider = PojoCodecProvider.builder().automatic(true).build();
         CodecRegistry codecRegistry = fromRegistries(getDefaultCodecRegistry(), fromProviders(pojoCodecProvider));
 
         MongoClientSettings clientSettings = MongoClientSettings.builder()
@@ -102,6 +97,11 @@ public class MongoDBConnection {
                 .kmsProviders(kmsProviders)
                 .build();
 
+
+        /*
+
+        Use this block for CSFLE without query support
+
         ClientEncryption clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
         BsonBinary dataKeyId = clientEncryption.createDataKey("local", new DataKeyOptions());
         base64DEK = Base64.getEncoder().encodeToString(dataKeyId.getData());
@@ -113,22 +113,44 @@ public class MongoDBConnection {
                                 .append("subType", "04")))))))
                 .append("properties", new Document()
                         .append("ssn", new Document().append("encrypt", new Document()
-                                .append("bsonType", "int")
+                                .append("bsonType", "string")
                                 .append("algorithm", "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic")))
                         .append("bloodType", new Document().append("encrypt", new Document()
                                 .append("bsonType", "string")
                                 .append("algorithm", "AEAD_AES_256_CBC_HMAC_SHA_512-Random")))
                         .append("medicalRecords", new Document().append("encrypt", new Document()
                                 .append("bsonType", "array")
-                                .append("algorithm", "AEAD_AES_256_CBC_HMAC_SHA_512-Random")))
-                        .append("insurance", new Document()
-                                .append("bsonType", "object")
-                                .append("properties",
-                                        new Document().append("policyNumber", new Document().append("encrypt", new Document()
-                                                .append("bsonType", "int")
-                                                .append("algorithm", "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"))))));
+                                .append("algorithm", "AEAD_AES_256_CBC_HMAC_SHA_512-Random"))));
 
-        schemaMap.put(keyVaultNamespace, BsonDocument.parse(jsonSchema.toJson()));
+        schemaMap.put("csfle.patients", BsonDocument.parse(jsonSchema.toJson()));
+
+         */
+
+        /*
+
+        Use this block to do queryable encryption
+         */
+
+        BsonDocument queryableEncryptionSchema = new BsonDocument().append("fields",
+                new BsonArray(Arrays.asList(
+                    new BsonDocument()
+                        .append("path", new BsonString("ssn"))
+                        .append("bsonType", new BsonString("string"))
+                        .append("keyId", new BsonNull())
+                        .append("queries", new BsonDocument().append("queryType", new BsonString("equality"))),
+                    new BsonDocument()
+                        .append("path", new BsonString("bloodType"))
+                        .append("keyId", new BsonNull())
+                        .append("bsonType",new BsonString( "string")),
+                    new BsonDocument()
+                        .append("path",new BsonString( "medicalRecords"))
+                        .append("keyId", new BsonNull())
+                )));
+
+
+
+        //HashMap<String, BsonDocument> queryableMap = new HashMap<>();
+        //queryableMap.put("csfle.patients", queryableEncryptionSchema);
 
         Map<String, Object> extraOptions = new HashMap<String, Object>();
         extraOptions.put("cryptSharedLibPath", "/Users/josh.smith/Projects/mongodb-sprint-zero/java-sample/mongo-crypt/lib/mongo_crypt_v1.dylib");
@@ -142,12 +164,29 @@ public class MongoDBConnection {
                 .autoEncryptionSettings(AutoEncryptionSettings.builder()
                         .keyVaultNamespace(keyVaultNamespace)
                         .kmsProviders(kmsProviders)
-                        .schemaMap(schemaMap)
+                        //.schemaMap(schemaMap)
+
+                        /*
+                        Removing the .encryptedFieldsMap from the config seems to be what actually allows it to work.
+                        But that goes against the documentation.
+                        So we have this field in the autoEncrypt work, but if we use it, it breaks things?
+                         */
+                        //.encryptedFieldsMap(queryableMap)
+
                         .extraOptions(extraOptions)
                         .build())
                 .build();
 
-        return MongoClients.create(clientSettings);
+        // This is a bit clunky to do this here, but you have to make sure this is done on the collection first so the DB can create the key indexes.
+        MongoClient client = MongoClients.create(clientSettings);
+        ClientEncryption clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
+
+        CreateEncryptedCollectionParams encryptedCollectionParams = new CreateEncryptedCollectionParams("local");
+        encryptedCollectionParams.masterKey(new BsonDocument());
+        CreateCollectionOptions options = new CreateCollectionOptions();
+        options.encryptedFields(queryableEncryptionSchema);
+        clientEncryption.createEncryptedCollection(client.getDatabase("csfle"), "patients", options, encryptedCollectionParams);
+        return client;
 
     }
 

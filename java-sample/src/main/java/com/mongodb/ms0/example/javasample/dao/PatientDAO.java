@@ -32,8 +32,8 @@ public class PatientDAO {
 
 
     public Patient getPatientById(String id){
-        System.out.print(this.collection.estimatedDocumentCount());
-        return collection.find(eq("_id", new ObjectId(id))).first();
+
+        return collection.find(eq("ssn", id)).first();
     }
 
     public Patient createPatient(Patient patient) {
