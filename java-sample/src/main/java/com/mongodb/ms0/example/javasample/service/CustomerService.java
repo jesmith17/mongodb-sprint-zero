@@ -18,6 +18,10 @@ public class CustomerService {
         return dao.getCustomerById(id);
     }
 
+    public List<Customer> getAllCustomers(){
+        return dao.getAllCustomers();
+    }
+
 
     public Customer createCustomer(Customer customer) {
         return dao.createCustomer(customer);

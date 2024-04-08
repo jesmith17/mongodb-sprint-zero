@@ -22,6 +22,12 @@ public class CustomerController {
         return service.getCustomerById(id);
     }
 
+
+    @GetMapping()
+    public List<Customer> getAllCustomers() {
+        return service.getAllCustomers();
+    }
+
     @PostMapping
     public Customer createCustomer(@RequestBody Customer customer) {
         return service.createCustomer(customer);

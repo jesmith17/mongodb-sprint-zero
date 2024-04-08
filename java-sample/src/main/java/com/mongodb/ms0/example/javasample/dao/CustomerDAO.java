@@ -31,6 +31,12 @@ public class CustomerDAO {
     }
 
 
+    public List<Customer> getAllCustomers(){
+        List<Customer> customers = new ArrayList<>();
+        collection.find().forEach(customer -> customers.add((Customer)customer));
+        return customers;
+
+    }
 
     public Customer getCustomerById(String id){
         System.out.print(this.collection.estimatedDocumentCount());
@@ -49,7 +55,7 @@ public class CustomerDAO {
         List aggregate = Arrays.asList(
                 Aggregates.match(Filters.or(eq("firstName", "Smith"), eq("lastName", "Smith")))
         );
-        this.collection.aggregate(aggregate).forEach(customer -> customers.add((Customer)customer));
+        this.collection.aggregate(aggregate);
         return customers;
 
     }
