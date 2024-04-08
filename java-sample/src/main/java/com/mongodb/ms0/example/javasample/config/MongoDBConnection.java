@@ -19,9 +19,11 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.ClassModel;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -37,18 +39,37 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 @Configuration
 @Service
+@PropertySource("classpath:application.properties")
 public class MongoDBConnection {
 
 
     public Map<String, Object> keyMap = new HashMap<>();
     public Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
 
-    private String keyVaultNamespace = "csfle.patientKeys";
+    @Value("${encryption.keyCollectionName}")
+    private String keyCollectionName;
 
     public String base64DEK;
     private Map<String, BsonDocument> schemaMap = new HashMap<>();
 
-    private String uri = "mongodb://localhost:27017";
+    @Value("${mongo.uri}")
+    private String uri;
+
+    @Value("${encryption.cryptLibSharedPath}")
+    private String cryptLibSharedPath;
+
+    @Value("${encryption.localKeyFile}")
+    private String localKeyFile;
+
+    @Value("${encryption.databaseName}")
+    private String databaseName;
+
+    @Value("${encryption.collectionName}")
+    private String collectionName;
+
+    private String keyVaultNamespace = this.databaseName + "." + this.keyCollectionName;
+
+
 
 
 
@@ -74,7 +95,7 @@ public class MongoDBConnection {
     @Scope(value= ConfigurableBeanFactory.SCOPE_SINGLETON)
     public MongoClient mongoSecureClient(){
         String kmsProvider = "local";
-        String path = "/Users/josh.smith/.kmip/customer-master-key.txt";
+        String path = this.localKeyFile;
         byte[] localMasterKeyRead = new byte[96];
 
 
@@ -93,7 +114,7 @@ public class MongoDBConnection {
                 .keyVaultMongoClientSettings(MongoClientSettings.builder()
                         .applyConnectionString(new ConnectionString(uri))
                         .build())
-                .keyVaultNamespace(keyVaultNamespace)
+                .keyVaultNamespace(this.keyVaultNamespace)
                 .kmsProviders(kmsProviders)
                 .build();
 
@@ -150,10 +171,10 @@ public class MongoDBConnection {
 
 
         HashMap<String, BsonDocument> queryableMap = new HashMap<>();
-        queryableMap.put("csfle.patients", queryableEncryptionSchema);
+        queryableMap.put(this.databaseName + "." + this.collectionName, queryableEncryptionSchema);
 
         Map<String, Object> extraOptions = new HashMap<String, Object>();
-        extraOptions.put("cryptSharedLibPath", "/Users/josh.smith/Projects/mongodb-sprint-zero/java-sample/mongo-crypt/lib/mongo_crypt_v1.dylib");
+        extraOptions.put("cryptSharedLibPath", this.cryptLibSharedPath);
 
         ConnectionString connectionString = new ConnectionString(uri);
         CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
@@ -162,7 +183,7 @@ public class MongoDBConnection {
                 .applyConnectionString(connectionString)
                 .codecRegistry(codecRegistry)
                 .autoEncryptionSettings(AutoEncryptionSettings.builder()
-                        .keyVaultNamespace(keyVaultNamespace)
+                        .keyVaultNamespace(this.keyVaultNamespace)
                         .kmsProviders(kmsProviders)
                         //.schemaMap(schemaMap)
 
@@ -180,7 +201,7 @@ public class MongoDBConnection {
         // This is a bit clunky to do this here, but you have to make sure this is done on the collection first so the DB can create the key indexes.
         MongoClient client = MongoClients.create(clientSettings);
 
-        MongoDatabase csfleDB = client.getDatabase("csfle");
+        MongoDatabase csfleDB = client.getDatabase(this.databaseName);
         csfleDB.drop();
         ClientEncryption clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
 
@@ -188,7 +209,7 @@ public class MongoDBConnection {
         encryptedCollectionParams.masterKey(new BsonDocument());
         CreateCollectionOptions options = new CreateCollectionOptions();
         options.encryptedFields(queryableEncryptionSchema);
-        clientEncryption.createEncryptedCollection(client.getDatabase("csfle"), "patients", options, encryptedCollectionParams);
+        clientEncryption.createEncryptedCollection(client.getDatabase(this.databaseName), this.collectionName, options, encryptedCollectionParams);
         return client;
 
     }

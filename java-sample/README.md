@@ -37,3 +37,67 @@ The project will expose a REST api located @ ``` /customer ``` by which you can 
    - This could be a great example of where you can replace the $or with a $search.  Ultimately thats why this exists with an aggregation instead of a traditional fine 
 
 
+# Queryable Encryption
+
+This has been extended to add in support for Queryable Encryption
+
+This happens by creating a new model ```Patient``` that uses Queryable Encryption to protect a couple fields. 
+Internally we do this by having the MongoDBConnection class create 2 different mongoClients beans to be injected
+
+```mongoClient``` is a standard Java connection with the default PojoCodec configured
+
+```mongoSecureClient``` is a mongo client with Queryable Encryption configured. All work to configure encryption is done in the creation for this bean.
+
+To use the queryable encryption portion, you need to do a couple things. Most of these are borrowed from our QuickStart here https://www.mongodb.com/docs/manual/core/queryable-encryption/quick-start/#std-label-qe-quick-start
+
+
+- [Create a local master key](https://www.mongodb.com/docs/manual/core/queryable-encryption/quick-start/#create-your-encrypted-collection)
+- Update the application.properties file with appropriate values
+  - Note that the ```Patient``` model annotation will need to be updated to match the value of the collectionName field if changed from the default
+- [Download the encryption library](https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/shared-library/)
+- Ensure your user has permissions to drop and create databases
+  -  For simplicity sake the app drops and re-builds the Db and the keys on each run. I might update it to check for those before hand in the future, but thats for another time
+
+Once the app runs, it will create 2 collections
+
+```patientKeys``` - This is where the encryption keys are stored
+```patient``` - this is where patient data is stored (unless you changed the collection names)
+
+
+There are 2 key API endpoints that also are available. 
+
+### POST /patient
+
+Send a body with payload like 
+```angular2html
+{
+    "name":"Josh Smith",
+    "ssn": "987654321",
+    "medicalRecords": [
+        {
+        "weight": 190,
+        "bloodPressure":"120/80"
+        },
+        {
+        "weight": 185,
+        "bloodPressure":"130/90"
+        }
+    ]
+}
+```
+This will create a patient records with encryption on the medicalRecords and SSN fields. SSN will be a queryable field and medicalRecords will not
+
+
+### GET /patient?ssn=xxxxxx
+
+A GET call to this endpoint, using the same SSN provided in the POST will show that you can search for a record by SSN even though it's encrypted in the DB. 
+
+
+
+
+
+
+
+
+
+
