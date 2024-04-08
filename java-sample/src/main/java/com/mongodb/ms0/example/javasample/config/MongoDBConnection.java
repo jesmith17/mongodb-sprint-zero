@@ -98,9 +98,9 @@ public class MongoDBConnection {
                 .build();
 
 
-        /*
 
-        Use this block for CSFLE without query support
+        /*
+        //Use this block for CSFLE without query support
 
         ClientEncryption clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
         BsonBinary dataKeyId = clientEncryption.createDataKey("local", new DataKeyOptions());
@@ -123,8 +123,8 @@ public class MongoDBConnection {
                                 .append("algorithm", "AEAD_AES_256_CBC_HMAC_SHA_512-Random"))));
 
         schemaMap.put("csfle.patients", BsonDocument.parse(jsonSchema.toJson()));
+        */
 
-         */
 
         /*
 
@@ -179,6 +179,9 @@ public class MongoDBConnection {
 
         // This is a bit clunky to do this here, but you have to make sure this is done on the collection first so the DB can create the key indexes.
         MongoClient client = MongoClients.create(clientSettings);
+
+        MongoDatabase csfleDB = client.getDatabase("csfle");
+        csfleDB.drop();
         ClientEncryption clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
 
         CreateEncryptedCollectionParams encryptedCollectionParams = new CreateEncryptedCollectionParams("local");

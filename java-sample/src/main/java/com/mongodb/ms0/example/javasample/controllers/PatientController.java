@@ -22,6 +22,11 @@ public class PatientController {
         return service.getPatientById(id);
     }
 
+    @GetMapping()
+    public Patient getPatientBySSN(@RequestParam String ssn) {
+        return service.getPatientBySSN(ssn);
+    }
+
     @PostMapping
     public Patient createPatient(@RequestBody Patient Patient) {
         return service.createPatient(Patient);

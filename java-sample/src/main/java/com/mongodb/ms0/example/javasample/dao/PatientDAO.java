@@ -33,8 +33,14 @@ public class PatientDAO {
 
     public Patient getPatientById(String id){
 
-        return collection.find(eq("ssn", id)).first();
+        return collection.find(eq("_id", new ObjectId(id))).first();
     }
+
+    public Patient getPatientBySSN(String ssn){
+
+        return collection.find(eq("ssn", ssn)).first();
+    }
+
 
     public Patient createPatient(Patient patient) {
         ObjectId id = collection.insertOne(patient).getInsertedId().asObjectId().getValue();

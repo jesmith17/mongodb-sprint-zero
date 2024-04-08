@@ -18,6 +18,10 @@ public class PatientService {
         return dao.getPatientById(id);
     }
 
+    public Patient getPatientBySSN(String ssn) {
+        return dao.getPatientBySSN(ssn);
+    }
+
 
     public Patient createPatient(Patient patient) {
         return dao.createPatient(patient);
