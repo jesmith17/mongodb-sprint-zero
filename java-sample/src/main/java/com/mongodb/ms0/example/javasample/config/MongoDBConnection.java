@@ -67,7 +67,7 @@ public class MongoDBConnection {
     @Value("${encryption.collectionName}")
     private String collectionName;
 
-    private String keyVaultNamespace = this.databaseName + "." + this.keyCollectionName;
+
 
 
 
@@ -94,6 +94,8 @@ public class MongoDBConnection {
     @Bean(name="mongoSecureClient")
     @Scope(value= ConfigurableBeanFactory.SCOPE_SINGLETON)
     public MongoClient mongoSecureClient(){
+
+        String keyVaultNamespace = this.databaseName + "." + this.keyCollectionName;
         String kmsProvider = "local";
         String path = this.localKeyFile;
         byte[] localMasterKeyRead = new byte[96];
@@ -114,7 +116,7 @@ public class MongoDBConnection {
                 .keyVaultMongoClientSettings(MongoClientSettings.builder()
                         .applyConnectionString(new ConnectionString(uri))
                         .build())
-                .keyVaultNamespace(this.keyVaultNamespace)
+                .keyVaultNamespace(keyVaultNamespace)
                 .kmsProviders(kmsProviders)
                 .build();
 
@@ -183,7 +185,7 @@ public class MongoDBConnection {
                 .applyConnectionString(connectionString)
                 .codecRegistry(codecRegistry)
                 .autoEncryptionSettings(AutoEncryptionSettings.builder()
-                        .keyVaultNamespace(this.keyVaultNamespace)
+                        .keyVaultNamespace(keyVaultNamespace)
                         .kmsProviders(kmsProviders)
                         //.schemaMap(schemaMap)
 

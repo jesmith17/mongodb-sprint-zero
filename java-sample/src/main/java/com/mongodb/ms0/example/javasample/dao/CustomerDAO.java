@@ -35,11 +35,9 @@ public class CustomerDAO {
         List<Customer> customers = new ArrayList<>();
         collection.find().forEach(customer -> customers.add((Customer)customer));
         return customers;
-
     }
 
     public Customer getCustomerById(String id){
-        System.out.print(this.collection.estimatedDocumentCount());
         return collection.find(eq("_id", new ObjectId(id))).first();
     }
 
