@@ -1,0 +1,17 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017
+      database: ms0
+
+logging:
+  config: classpath:log4j2.xml
+  level:
+    org:
+      springframework:
+        data:
+          mongodb:
+            core: DEBUG
+      mongodb:
+        driver: WARN
+

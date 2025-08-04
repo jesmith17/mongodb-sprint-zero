@@ -1,0 +1,10 @@
+#Connection Template
+#spring.data.mongodb.uri=mongodb+srv://<username>:<pwd>@<cluster>.mongodb.net/mygrocerylist
+
+
+#Local MongoDB - no authentication
+spring.data.mongodb.uri=mongodb://localhost:27017/ms0
+
+
+logging.level.org.springframework.data.mongodb.core=DEBUG
+logging.level.org.mongodb.driver=INFO

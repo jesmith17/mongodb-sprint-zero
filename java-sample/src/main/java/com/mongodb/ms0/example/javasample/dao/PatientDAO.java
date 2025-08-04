@@ -32,12 +32,10 @@ public class PatientDAO {
 
 
     public Patient getPatientById(String id){
-
         return collection.find(eq("_id", new ObjectId(id))).first();
     }
 
     public Patient getPatientBySSN(String ssn){
-
         return collection.find(eq("ssn", ssn)).first();
     }
 
@@ -46,7 +44,6 @@ public class PatientDAO {
         ObjectId id = collection.insertOne(patient).getInsertedId().asObjectId().getValue();
         patient.setId(id);
         return patient;
-
     }
 
     public List<Patient> patientSearch(String name){
@@ -56,7 +53,6 @@ public class PatientDAO {
         );
         this.collection.aggregate(aggregate).forEach(patient -> patients.add((Patient)patient));
         return patients;
-
     }
 
 

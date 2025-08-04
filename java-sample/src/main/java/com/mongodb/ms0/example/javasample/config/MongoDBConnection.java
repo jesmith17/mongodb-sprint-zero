@@ -12,13 +12,16 @@ import com.mongodb.client.model.CreateEncryptedCollectionParams;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
+import com.mongodb.event.ClusterListener;
 import com.mongodb.ms0.example.javasample.models.Customer;
 import com.mongodb.ms0.example.javasample.models.Patient;
+import org.apache.catalina.Cluster;
 import org.bson.*;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.ClassModel;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
@@ -72,10 +75,11 @@ public class MongoDBConnection {
 
 
 
-
     @Bean(name="mongoClient")
     @Scope(value= ConfigurableBeanFactory.SCOPE_SINGLETON)
     public MongoClient mongoClient() {
+
+        ClusterListener listener = new TopologyListener();
 
         ConnectionString connectionString = new ConnectionString(uri);
         CodecProvider pojoCodecProvider = PojoCodecProvider.builder().automatic(true).build();
@@ -84,6 +88,7 @@ public class MongoDBConnection {
         MongoClientSettings clientSettings = MongoClientSettings.builder()
                 .applyConnectionString(connectionString)
                 .codecRegistry(codecRegistry)
+                .applyToClusterSettings(builder -> builder.addClusterListener(listener))
                 .build();
         // Replace the uri string with your MongoDB deployment's connection string
         return MongoClients.create(clientSettings);
@@ -175,8 +180,15 @@ public class MongoDBConnection {
         HashMap<String, BsonDocument> queryableMap = new HashMap<>();
         queryableMap.put(this.databaseName + "." + this.collectionName, queryableEncryptionSchema);
 
+        List<String> spawnArgs = new ArrayList<String>();
+        spawnArgs.add("--port=27020");
+
         Map<String, Object> extraOptions = new HashMap<String, Object>();
-        extraOptions.put("cryptSharedLibPath", this.cryptLibSharedPath);
+        extraOptions.put("mongocryptdSpawnArgs", spawnArgs);
+
+
+        //Map<String, Object> extraOptions = new HashMap<String, Object>();
+        //extraOptions.put("cryptSharedLibPath", this.cryptLibSharedPath);
 
         ConnectionString connectionString = new ConnectionString(uri);
         CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());

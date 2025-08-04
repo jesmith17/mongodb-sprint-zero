@@ -41,6 +41,23 @@ public class CustomerService {
         return repository.customerSearch(name);
     }
 
+    public Customer updateCustomer(String id, Customer customer) {
+        /*long updatedCount = repository.updateCustomer(customer.getFirstName(), customer.getLastName(), id);
+        if (updatedCount > 0) {
+            return customer;
+        } else {
+            return null;
+        }*/
+        Customer oldCustomer = repository.findById(id).orElse(null);
+        oldCustomer.setFirstName(customer.getFirstName());
+        oldCustomer.setLastName(customer.getLastName());
+        return repository.save(oldCustomer);
+    };
+
+
+
+
+    /*
     @Transactional
     public Customer updateCustomer(String id, Customer customer) {
 
@@ -60,14 +77,8 @@ public class CustomerService {
 
         template.updateFirst(query, update, Customer.class);
         return template.findById(id, Customer.class);
-
-
-
-
-
-
-
     }
+    */
 
     public Page<Customer> getAllCustomers(int page){
         Pageable pageable = PageRequest.of(0,10);

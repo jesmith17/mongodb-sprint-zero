@@ -35,7 +35,7 @@ public class SpringDataApplication {
         ChangeStreamRequest<Customer> request = ChangeStreamRequest.builder()
                 .collection("customers")
                 .publishTo(listener)
-                .database("providerPref")
+                .database("ms0")
                 .filter()
                 .build();
 
